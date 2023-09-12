@@ -198,108 +198,107 @@ int main()
                     // Regras para herbívoros
                     // <YOUR CODE HERE>
                     // Regras para herbívoros
-            if (currentEntity.age >= HERBIVORE_MAXIMUM_AGE || currentEntity.energy <= 0) {
-                // Herbívoro morre após 50 etapas de tempo ou se a energia chegar a 0
-                currentEntity = {empty, 0, 0};
-            } else {
-                // Verifique a probabilidade de movimento
-                double moveProbability = (double)rand() / RAND_MAX;
-                if (moveProbability <= HERBIVORE_MOVE_PROBABILITY) {
-                    // Encontre uma célula adjacente aleatória (excluindo células com carnívoros)
-                    int newRow, newCol;
-                    bool foundEmptyCell = false;
-                    int attempts = 0;
-                    while (!foundEmptyCell && attempts < 4) {
-                        int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
-                        newRow = row;
-                        newCol = col;
-                        if (direction == 0) {
-                            newRow--;
-                        } else if (direction == 1) {
-                            newRow++;
-                        } else if (direction == 2) {
-                            newCol--;
-                        } else {
-                            newCol++;
-                        }
-                        
-                        // Verifique se a célula é válida e está vazia (não contém carnívoros)
-                        if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS && entity_grid[newRow][newCol].type == empty) {
-                            foundEmptyCell = true;
-                        }
-                        
-                        attempts++;
+    if (currentEntity.age >= HERBIVORE_MAXIMUM_AGE || currentEntity.energy <= 0) {
+        // Herbívoro morre após 50 etapas de tempo ou se a energia chegar a 0
+        currentEntity = {empty, 0, 0};
+    } else {
+        // Verifique a probabilidade de movimento
+        double moveProbability = (double)rand() / RAND_MAX;
+        if (moveProbability <= HERBIVORE_MOVE_PROBABILITY) {
+            // Encontre uma célula adjacente aleatória (excluindo células com carnívoros)
+            int newRow, newCol;
+            bool foundEmptyCell = false;
+            int attempts = 0;
+            while (!foundEmptyCell && attempts < 4) {
+                int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
+                newRow = row;
+                newCol = col;
+                if (direction == 0) {
+                    newRow--;
+                } else if (direction == 1) {
+                    newRow++;
+                } else if (direction == 2) {
+                    newCol--;
+                } else {
+                    newCol++;
+                }
+                
+                // Verifique se a célula é válida e está vazia (não contém carnívoros)
+                if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS && entity_grid[newRow][newCol].type == empty) {
+                    foundEmptyCell = true;
+                }
+                
+                attempts++;
+            }
+            
+            if (foundEmptyCell) {
+                // Movimente o herbívoro para a célula adjacente
+                entity_grid[newRow][newCol] = currentEntity;
+                entity_grid[row][col] = {empty, 0, 0};
+                currentEntity = {herbivore, currentEntity.energy - 5, 0}; // A energia é gasta no movimento
+            }
+        } else {
+            // O herbívoro não se move nesta iteração, mas gasta energia
+            currentEntity.energy -= 5;
+        }
+        
+        // Verifique a probabilidade de alimentação
+        double eatProbability = (double)rand() / RAND_MAX;
+        if (eatProbability <= HERBIVORE_EAT_PROBABILITY) {
+            // Verifique se há uma planta adjacente para comer
+            for (int i = -1; i <= 1; ++i) {
+                for (int j = -1; j <= 1; ++j) {
+                    int adjRow = row + i;
+                    int adjCol = col + j;
+                    if (adjRow >= 0 && adjRow < NUM_ROWS && adjCol >= 0 && adjCol < NUM_ROWS &&
+                        entity_grid[adjRow][adjCol].type == plant) {
+                        // Herbívoro come a planta
+                        currentEntity.energy += 30;
+                        // Remova a planta
+                        entity_grid[adjRow][adjCol] = {empty, 0, 0};
+                    }
+                }
+            }
+        }
+        
+        // Verifique a probabilidade de reprodução
+        if (currentEntity.energy > THRESHOLD_ENERGY_FOR_REPRODUCTION) {
+            double reproductionProbability = (double)rand() / RAND_MAX;
+            if (reproductionProbability <= HERBIVORE_REPRODUCTION_PROBABILITY) {
+                // Encontre uma célula vazia adjacente aleatoriamente para colocar a prole
+                int newRow, newCol;
+                bool foundEmptyCell = false;
+                int attempts = 0;
+                while (!foundEmptyCell && attempts < 4) {
+                    int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
+                    newRow = row;
+                    newCol = col;
+                    if (direction == 0) {
+                        newRow--;
+                    } else if (direction == 1) {
+                        newRow++;
+                    } else if (direction == 2) {
+                        newCol--;
+                    } else {
+                        newCol++;
                     }
                     
-                    if (foundEmptyCell) {
-                        // Movimente o herbívoro para a célula adjacente
-                        entity_grid[newRow][newCol] = currentEntity;
-                        entity_grid[row][col] = {empty, 0, 0};
-                        currentEntity = {empty, 0, 0}; // A energia é gasta no movimento
+                    // Verifique se a célula é válida e está vazia
+                    if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS && entity_grid[newRow][newCol].type == empty) {
+                        foundEmptyCell = true;
                     }
-                } else {
-                    // O herbívoro não se move nesta iteração, mas gasta energia
-                    currentEntity.energy -= 5;
+                    
+                    attempts++;
                 }
                 
-                // Verifique a probabilidade de alimentação
-                double eatProbability = (double)rand() / RAND_MAX;
-                if (eatProbability <= HERBIVORE_EAT_PROBABILITY) {
-                    // Verifique se há uma planta adjacente para comer
-                    for (int i = -1; i <= 1; ++i) {
-                        for (int j = -1; j <= 1; ++j) {
-                            int adjRow = row + i;
-                            int adjCol = col + j;
-                            if (adjRow >= 0 && adjRow < NUM_ROWS && adjCol >= 0 && adjCol < NUM_ROWS &&
-                                entity_grid[adjRow][adjCol].type == plant) {
-                                // Herbívoro come a planta
-                                currentEntity.energy += 30;
-                                // Remova a planta
-                                entity_grid[adjRow][adjCol] = {empty, 0, 0};
-                            }
-                        }
-                    }
+                if (foundEmptyCell) {
+                    // Crie a prole na célula vazia adjacente
+                    entity_grid[newRow][newCol] = {herbivore, MAXIMUM_ENERGY, 0};
+                    // Desconte o custo de energia da reprodução
+                    currentEntity.energy -= 10;
                 }
-                
-                // Verifique a probabilidade de reprodução
-                if (currentEntity.energy > 20) {
-                    double reproductionProbability = (double)rand() / RAND_MAX;
-                    if (reproductionProbability <= HERBIVORE_REPRODUCTION_PROBABILITY) {
-                        // Encontre uma célula vazia adjacente aleatoriamente para colocar a prole
-                        int newRow, newCol;
-                        bool foundEmptyCell = false;
-                        int attempts = 0;
-                        while (!foundEmptyCell && attempts < 4) {
-                            int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
-                            newRow = row;
-                            newCol = col;
-                            if (direction == 0) {
-                                newRow--;
-                            } else if (direction == 1) {
-                                newRow++;
-                            } else if (direction == 2) {
-                                newCol--;
-                            } else {
-                                newCol++;
-                            }
-                            
-                            // Verifique se a célula é válida e está vazia
-                            if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS && entity_grid[newRow][newCol].type == empty) {
-                                foundEmptyCell = true;
-                            }
-                            
-                            attempts++;
-                        }
-                        
-                        if (foundEmptyCell) {
-                            // Crie a prole na célula vazia adjacente
-                            entity_grid[newRow][newCol] = {herbivore, MAXIMUM_ENERGY, 0};
-                            // Desconte o custo de energia da reprodução
-                            currentEntity.energy -= 10;
-                        }
-                    }
-                }
-                
+            }
+        }                
                 // Atualize a idade do herbívoro
                 currentEntity.age++;
             }
