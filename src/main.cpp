@@ -5,6 +5,42 @@
 #include "json.hpp"
 #include <random>
 
+// Function to generate a random action based on probability
+bool random_action(float probability) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+    return dis(gen) < probability;
+}
+
+// Simulate random actions for different entities
+void simulate_random_actions() {
+    // Probabilities for different actions
+    float plant_growth_probability = 0.20; // 20% chance of growth
+    float herbivore_move_probability = 0.70; // 70% chance to action
+    float carnivore_move_probability = 0.60; // 60% chance to action
+
+    // Simulate plant growth
+    if (random_action(plant_growth_probability)) {
+        std::cout << "Plant grows.\n";
+    } else {
+        std::cout << "Plant does not grow.\n";
+    }
+
+    // Simulate herbivore action
+    if (random_action(herbivore_move_probability)) {
+        std::cout << "Herbivore moves.\n";
+    } else {
+        std::cout << "Herbivore does not move.\n";
+    }
+
+    // Simulate carnivore action
+    if (random_action(carnivore_move_probability)) {
+        std::cout << "Carnivore moves.\n";
+    } else {
+        std::cout << "Carnivore does not move.\n";
+    }
+}
 static const uint32_t NUM_ROWS = 15;
 
 // Constants
@@ -15,7 +51,7 @@ const uint32_t MAXIMUM_ENERGY = 200;
 const uint32_t THRESHOLD_ENERGY_FOR_REPRODUCTION = 20;
 
 // Probabilities
-const double PLANT_REPRODUCTION_PROBABILITY = 0.2;
+const double PLANT_REPRODUCTION_PROBABILITY = 0.20;
 const double HERBIVORE_REPRODUCTION_PROBABILITY = 0.075;
 const double CARNIVORE_REPRODUCTION_PROBABILITY = 0.025;
 const double HERBIVORE_MOVE_PROBABILITY = 0.7;
@@ -68,7 +104,7 @@ static std::vector<std::vector<entity_t>> entity_grid;
 int main()
 {
     crow::SimpleApp app;
-
+    simulate_random_actions();
     // Endpoint to serve the HTML page
     CROW_ROUTE(app, "/")
     ([](crow::request &, crow::response &res)
@@ -100,6 +136,7 @@ int main()
         // <YOUR CODE HERE>
         // Create the entities
         // Get the number of plants, herbivores, and carnivores from the request body
+    
         uint32_t numPlants = (uint32_t)request_body["plants"];
         uint32_t numHerbivores = (uint32_t)request_body["herbivores"];
         uint32_t numCarnivores = (uint32_t)request_body["carnivores"];
@@ -142,6 +179,7 @@ int main()
             
             entity_grid[row][col] = {carnivore, MAXIMUM_ENERGY, 0};
         }
+//fim
 
 
         // Return the JSON representation of the entity grid
@@ -161,16 +199,16 @@ int main()
         for (uint32_t row = 0; row < NUM_ROWS; ++row) {
             for (uint32_t col = 0; col < NUM_ROWS; ++col) {
                 entity_t &currentEntity = entity_grid[row][col];
-
+    float herbivore_move_probability = 0.70; // 70% chance to action
+    float carnivore_move_probability = 0.60; // 60% chance to action
                 if (currentEntity.type == plant) {
                     // Regras para plantas
                     if (currentEntity.age >= PLANT_MAXIMUM_AGE) {
                         // Planta morre após 10 etapas de tempo
                         currentEntity = {empty, 0, 0};
                     } else {
-                        // Verifique a probabilidade de crescimento
-                        double growthProbability = (double)rand() / RAND_MAX;
-                        if (growthProbability <= PLANT_REPRODUCTION_PROBABILITY) {
+                        // Simulate plant growth using the random_action function
+                        if (random_action(PLANT_REPRODUCTION_PROBABILITY)) {
                             // Encontre uma célula vazia adjacente aleatoriamente
                             int newRow, newCol;
                             do {
@@ -196,15 +234,12 @@ int main()
                     }
                 } else if (currentEntity.type == herbivore) {
                     // Regras para herbívoros
-                    // <YOUR CODE HERE>
-                    // Regras para herbívoros
     if (currentEntity.age >= HERBIVORE_MAXIMUM_AGE || currentEntity.energy <= 0) {
         // Herbívoro morre após 50 etapas de tempo ou se a energia chegar a 0
         currentEntity = {empty, 0, 0};
     } else {
-        // Verifique a probabilidade de movimento
-        double moveProbability = (double)rand() / RAND_MAX;
-        if (moveProbability <= HERBIVORE_MOVE_PROBABILITY) {
+        // Simulate herbivore move based on the herbivore_move_probability
+        if (random_action(herbivore_move_probability)) {
             // Encontre uma célula adjacente aleatória (excluindo células com carnívoros)
             int newRow, newCol;
             bool foundEmptyCell = false;
@@ -298,110 +333,110 @@ int main()
                     currentEntity.energy -= 10;
                 }
             }
-        }                
+        }   
                 // Atualize a idade do herbívoro
                 currentEntity.age++;
             }
                 } else if (currentEntity.type == carnivore) {
                     // Regras para carnívoros
-                    // <YOUR CODE HERE>
-                    if (currentEntity.age >= CARNIVORE_MAXIMUM_AGE || currentEntity.energy <= 0) {
-                // Carnívoro morre após 80 etapas de tempo ou se a energia chegar a 0
-                currentEntity = {empty, 0, 0};
-            } else {
-                // Verifique a probabilidade de movimento
-                double moveProbability = (double)rand() / RAND_MAX;
-                if (moveProbability <= CARNIVORE_MOVE_PROBABILITY) {
-                    // Encontre uma célula adjacente aleatória (incluindo células com herbívoros)
-                    int newRow, newCol;
-                    bool foundEmptyCell = false;
-                    int attempts = 0;
-                    while (!foundEmptyCell && attempts < 4) {
-                        int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
-                        newRow = row;
-                        newCol = col;
-                        if (direction == 0) {
-                            newRow--;
-                        } else if (direction == 1) {
-                            newRow++;
-                        } else if (direction == 2) {
-                            newCol--;
-                        } else {
-                            newCol++;
-                        }
-                        
-                        // Verifique se a célula é válida
-                        if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS) {
-                            foundEmptyCell = true;
-                        }
-                        
-                        attempts++;
+    // <YOUR CODE HERE>
+    
+    if (currentEntity.age >= CARNIVORE_MAXIMUM_AGE || currentEntity.energy <= 0) {
+        // Carnívoro morre após 80 etapas de tempo ou se a energia chegar a 0
+        currentEntity = {empty, 0, 0};
+    } else {
+        // Simulate carnivore move based on the carnivore_move_probability
+        if (random_action(carnivore_move_probability)) {
+            // Encontre uma célula adjacente aleatória (incluindo células com herbívoros)
+            int newRow, newCol;
+            bool foundEmptyCell = false;
+            int attempts = 0;
+            while (!foundEmptyCell && attempts < 4) {
+                int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
+                newRow = row;
+                newCol = col;
+                if (direction == 0) {
+                    newRow--;
+                } else if (direction == 1) {
+                    newRow++;
+                } else if (direction == 2) {
+                    newCol--;
+                } else {
+                    newCol++;
+                }
+                
+                // Verifique se a célula é válida
+                if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS) {
+                    foundEmptyCell = true;
+                }
+                
+                attempts++;
+            }
+            
+            if (foundEmptyCell) {
+                // Movimente o carnívoro para a célula adjacente
+                entity_grid[newRow][newCol] = currentEntity;
+                entity_grid[row][col] = {empty, 0, 0};
+                currentEntity = {empty, 0, 0}; // A energia é gasta no movimento
+            }
+        } else {
+            // O carnívoro não se move nesta iteração, mas gasta energia
+            currentEntity.energy -= 5;
+        }
+        
+        // Verifique a probabilidade de alimentação
+        for (int i = -1; i <= 1; ++i) {
+            for (int j = -1; j <= 1; ++j) {
+                int adjRow = row + i;
+                int adjCol = col + j;
+                if (adjRow >= 0 && adjRow < NUM_ROWS && adjCol >= 0 && adjCol < NUM_ROWS &&
+                    entity_grid[adjRow][adjCol].type == herbivore) {
+                    // Carnívoro come o herbívoro
+                    currentEntity.energy += 20;
+                    // Remova o herbívoro
+                    entity_grid[adjRow][adjCol] = {empty, 0, 0};
+                }
+            }
+        }
+        
+        // Verifique a probabilidade de reprodução
+        if (currentEntity.energy > 20) {
+            double reproductionProbability = (double)rand() / RAND_MAX;
+            if (reproductionProbability <= CARNIVORE_REPRODUCTION_PROBABILITY) {
+                // Encontre uma célula vazia adjacente aleatoriamente para colocar a prole
+                int newRow, newCol;
+                bool foundEmptyCell = false;
+                int attempts = 0;
+                while (!foundEmptyCell && attempts < 4) {
+                    int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
+                    newRow = row;
+                    newCol = col;
+                    if (direction == 0) {
+                        newRow--;
+                    } else if (direction == 1) {
+                        newRow++;
+                    } else if (direction == 2) {
+                        newCol--;
+                    } else {
+                        newCol++;
                     }
                     
-                    if (foundEmptyCell) {
-                        // Movimente o carnívoro para a célula adjacente
-                        entity_grid[newRow][newCol] = currentEntity;
-                        entity_grid[row][col] = {empty, 0, 0};
-                        currentEntity = {empty, 0, 0}; // A energia é gasta no movimento
+                    // Verifique se a célula é válida e está vazia
+                    if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS && entity_grid[newRow][newCol].type == empty) {
+                        foundEmptyCell = true;
                     }
-                } else {
-                    // O carnívoro não se move nesta iteração, mas gasta energia
-                    currentEntity.energy -= 5;
+                    
+                    attempts++;
                 }
                 
-                // Verifique a probabilidade de alimentação
-                for (int i = -1; i <= 1; ++i) {
-                    for (int j = -1; j <= 1; ++j) {
-                        int adjRow = row + i;
-                        int adjCol = col + j;
-                        if (adjRow >= 0 && adjRow < NUM_ROWS && adjCol >= 0 && adjCol < NUM_ROWS &&
-                            entity_grid[adjRow][adjCol].type == herbivore) {
-                            // Carnívoro come o herbívoro
-                            currentEntity.energy += 20;
-                            // Remova o herbívoro
-                            entity_grid[adjRow][adjCol] = {empty, 0, 0};
-                        }
-                    }
+                if (foundEmptyCell) {
+                    // Crie a prole na célula vazia adjacente
+                    entity_grid[newRow][newCol] = {carnivore, MAXIMUM_ENERGY, 0};
+                    // Desconte o custo de energia da reprodução
+                    currentEntity.energy -= 10;
                 }
-                
-                // Verifique a probabilidade de reprodução
-                if (currentEntity.energy > 20) {
-                    double reproductionProbability = (double)rand() / RAND_MAX;
-                    if (reproductionProbability <= CARNIVORE_REPRODUCTION_PROBABILITY) {
-                        // Encontre uma célula vazia adjacente aleatoriamente para colocar a prole
-                        int newRow, newCol;
-                        bool foundEmptyCell = false;
-                        int attempts = 0;
-                        while (!foundEmptyCell && attempts < 4) {
-                            int direction = rand() % 4; // 0: cima, 1: baixo, 2: esquerda, 3: direita
-                            newRow = row;
-                            newCol = col;
-                            if (direction == 0) {
-                                newRow--;
-                            } else if (direction == 1) {
-                                newRow++;
-                            } else if (direction == 2) {
-                                newCol--;
-                            } else {
-                                newCol++;
-                            }
-                            
-                            // Verifique se a célula é válida e está vazia
-                            if (newRow >= 0 && newRow < NUM_ROWS && newCol >= 0 && newCol < NUM_ROWS && entity_grid[newRow][newCol].type == empty) {
-                                foundEmptyCell = true;
-                            }
-                            
-                            attempts++;
-                        }
-                        
-                        if (foundEmptyCell) {
-                            // Crie a prole na célula vazia adjacente
-                            entity_grid[newRow][newCol] = {carnivore, MAXIMUM_ENERGY, 0};
-                            // Desconte o custo de energia da reprodução
-                            currentEntity.energy -= 10;
-                        }
-                    }
-                }
+            }
+        }
                 
                 // Atualize a idade do carnívoro
                 currentEntity.age++;
